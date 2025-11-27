@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+
+    environment {
+        SSH_CRED = 'python'       // Jenkins SSH key credential ID
+        SERVER_IP = '65.0.73.224'       // EC2 Public IP
+        REMOTE_USER = 'ubuntu'
+        WEB_DIR = '/usr/share/nginx/html/'   // Nginx web root
+    }
+
+    stages {
+        stage('Clone Repo') {
+            steps {
+                echo "📥 Pulling source code from GitHub..."
+                git url: 'https://github.com/hrishikeshkhandagale/static-website-project.git', branch: 'main'
+            }
+        }
+
+        stage('Deploy to Nginx Server') {
+            steps {
+                sshagent(credentials: ["${SSH_CRED}"]) {
+                    sh '''
+                        echo "🧹 Cleaning old website files..."
+                        ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${SERVER_IP} "sudo rm -rf ${WEB_DIR}/*"
+
+                        echo "📤 Uploading new website files to server..."
+                        scp -o StrictHostKeyChecking=no -r * ${REMOTE_USER}@${SERVER_IP}:/tmp/
+
+                        echo "📦 Moving website files to Nginx directory..."
+                        ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${SERVER_IP} "sudo cp -r /tmp/* ${WEB_DIR}/"
+
+                        echo "🔁 Restarting Nginx..."
+                        ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${SERVER_IP} "sudo systemctl restart nginx"
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "🚀 Deployment Successful! Website Live: http://${SERVER_IP}"
+        }
+        failure {
+            echo "❌ Deployment Failed — check Jenkins console output."
+        }
+    }
+}
