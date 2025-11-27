@@ -5,7 +5,7 @@ pipeline {
         SSH_CRED = 'python'       // Jenkins SSH key credential ID
         SERVER_IP = '65.0.73.224'       // EC2 Public IP
         REMOTE_USER = 'ubuntu'
-        WEB_DIR = '/usr/share/nginx/html/'   // Nginx web root
+        WEB_DIR = '/var/www/html/'   // Nginx web root
     }
 
     stages {
