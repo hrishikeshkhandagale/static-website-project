@@ -3,3 +3,5 @@
 *.backup
 .terraform/
 .terraform.lock.hcl
+.main.tf
+.install_nginx.sh
